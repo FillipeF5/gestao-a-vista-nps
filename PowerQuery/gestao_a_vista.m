@@ -14,7 +14,7 @@ let
     Sheet1 = WB{[Item="Sheet 1", Kind="Sheet"]}[Data],
 
     // ====== 3) Limpeza inicial ======
-    LinhasSuperioresRemovidas = Table.Skip(Sheet1, 5),
+    LinhasSuperioresRemovidas = Table.Skip(Sheet1, 6),
     CabecalhosPromovidos = Table.PromoteHeaders(LinhasSuperioresRemovidas, [PromoteAllScalars=true]),
 
     // ====== 4) Tipagem ======
@@ -33,12 +33,12 @@ let
         {"!9.13.0.1 [PRO CA ME] - NPS Pergunta 2 - Projeto Valor (Local Do Atendimento)", type text},
         {"!9.13.0.2 [PRO CA ME] - NPS Pergunta 3 - Projeto Valor (Recomendaria)", type text},
         {"!9.13.3 [PRO CA PL] NPS Pergunta 4 - Projeto Valor [ Pergunta Livre ]", type any},
-        {"Column15", Int64.Type},
+        {"Column17", Int64.Type},
         {"Column16", Int64.Type}
     }),
 
     LinhasInferioresRemovidas = Table.RemoveLastN(TipoAlterado, 1),
-    ColunasRemovidas = Table.RemoveColumns(LinhasInferioresRemovidas, {"Fila", "Agente", "Classificação", "Column15", "Column16"}),
+    ColunasRemovidas = Table.RemoveColumns(LinhasInferioresRemovidas, {"Fila", "Agente", "Classificação", "Column17", "Column16"}),
 
     // ====== 5) Renomear perguntas ======
     ColunasRenomeadas = Table.RenameColumns(ColunasRemovidas, {
@@ -69,7 +69,15 @@ let
         "CategoriaFeedback",
         each fxClassificarPorPadroes([#"Pergunta 4 - Pergunta Livre"], MapaTipado),
         type text
+    ),
+
+    // Divide a coluna Omnitag em uma lista com 3 partes
+    ColunasSeparadas = Table.SplitColumn(
+        #"CategoriaFeedback",
+        "Omnitag",
+        Splitter.SplitTextByDelimiter(" - ", QuoteStyle.Csv),
+        {"Cidade", "Medico", "Cooperado SN"}
     )
 
 in
-    CategoriaFeedback
+    ColunasSeparadas

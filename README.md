@@ -12,7 +12,7 @@ Projeto para classificar automaticamente respostas textuais de clientes no proce
 ## Estrutura do Projeto
 - `fxRemoveAcentos.m` — remove acentos
 - `fxClassificarPorPadroes.m` — classifica textos
-- `MapaPalavrasChave.csv` — padrões, categorias e prioridade
+- `MapaPalavrasChave.xlsx` — padrões, categorias e prioridade
 - `gestao_a_vista.m` — consulta principal
 
 ## Como Reutilizar
