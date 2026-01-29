@@ -77,7 +77,90 @@ let
         "Omnitag",
         Splitter.SplitTextByDelimiter(" - ", QuoteStyle.Csv),
         {"Cidade", "Medico", "Cooperado SN"}
-    )
+    ),
+    #"SubstituicoesEmTodas" =
+    let
+    //Colunas onde as substituições serão aplicadas
+    colunas = {
+        "Pergunta 1 - Atendimento Médico",
+        "Pergunta 2 - Local Do Atendimento",
+        "Pergunta 3 - Recomendaria"
+    },
+
+    //Normaliza: garante texto, trim e normaliza hífens em todas as colunas alvo
+    Normalizadas = Table.TransformColumns(
+        ColunasSeparadas,
+        List.Transform(
+            colunas,
+            each {_, (v) => Text.Trim(Text.Replace(Text.Replace(Text.Replace(Text.From(v & ""), "–","-"), "—","-"), "−","-")), type text}
+        )
+    ),
+
+    //Substitui nulos e strings vazias por "0" (IMPORTANTE: null sem aspas)
+    NulosParaZero = Table.ReplaceValue(Normalizadas, null, "0", Replacer.ReplaceValue, colunas),
+    VaziosParaZero = Table.ReplaceValue(NulosParaZero, "", "0", Replacer.ReplaceValue, colunas),
+
+    //Lista de pares {de -> para} (strings corrigidas — veja as quantidades de estrelas)
+    substituicoes = {
+        {"10 - ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐", "10"},
+        {"10-⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐", "10"},
+        {"10 -⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐", "10"},
+        {"Nota 10", "10"},
+        {"9 - ⭐⭐⭐⭐⭐⭐⭐⭐⭐", "9"},
+        {"9-⭐⭐⭐⭐⭐⭐⭐⭐⭐", "9"},
+        {"8 - ⭐⭐⭐⭐⭐⭐⭐⭐", "8"},
+        {"8-⭐⭐⭐⭐⭐⭐⭐⭐", "8"},
+        {"7 - ⭐⭐⭐⭐⭐⭐⭐", "7"},
+        {"6 - ⭐⭐⭐⭐⭐⭐", "6"},
+        {"5 - ⭐⭐⭐⭐⭐", "5"},
+        {"4 - ⭐⭐⭐⭐", "4"},
+        {"3 - ⭐⭐⭐", "3"},
+        {"2 - ⭐⭐", "2"},
+        {"1 - ⭐", "1"}
+    },
+
+    //Aplica todas as substituições em todas as colunas (uma iteração para cada par)
+    Resultado =
+        List.Accumulate(
+            substituicoes,
+            VaziosParaZero,
+            (estado, par) =>
+                Table.ReplaceValue(
+                    estado,
+                    par{0},
+                    par{1},
+                    Replacer.ReplaceText,
+                    colunas
+                )
+        )
+    in
+    Resultado,
+    #"Tipo Alterado1" = Table.TransformColumnTypes(SubstituicoesEmTodas,{
+        {"Pergunta 1 - Atendimento Médico", Int64.Type},
+        {"Pergunta 2 - Local Do Atendimento", Int64.Type},
+        {"Pergunta 3 - Recomendaria", Int64.Type}
+    }),
+    
+    #"Erros Removidos1" = Table.RemoveRowsWithErrors(#"Tipo Alterado1", {
+        "Pergunta 1 - Atendimento Médico", 
+        "Pergunta 2 - Local Do Atendimento", 
+        "Pergunta 3 - Recomendaria"
+    }),
+
+    #"Média de avaliação do cliente" = 
+    Table.AddColumn(#"Erros Removidos1", "media_da_avaliacao_do_cliente", each 
+        List.Average(
+            {[#"Pergunta 1 - Atendimento Médico"],
+            [#"Pergunta 2 - Local Do Atendimento"],
+            [#"Pergunta 3 - Recomendaria"]}
+        )
+    ),
+
+    #"Classificação da avaliação" = Table.AddColumn(#"Média de avaliação do cliente", "classificacao", 
+    each if [#"Pergunta 3 - Recomendaria"] <= 6 then "Detrator"
+    else if [#"Pergunta 3 - Recomendaria"] > 6 and [#"Pergunta 3 - Recomendaria"] < 9 then "Neutro"
+    else if [#"Pergunta 3 - Recomendaria"] >= 9 then "Promotor"
+    else "")
 
 in
-    ColunasSeparadas
+    #"Classificação da avaliação"
