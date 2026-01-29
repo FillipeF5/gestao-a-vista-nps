@@ -20,5 +20,3 @@
 
 ## 5. Classificação
 A consulta aplica:
-
-``
