@@ -1,11 +1,11 @@
 let
     // ====== 1) Fonte: pasta e arquivo ======
-    Fonte = Folder.Files("C:\Users\uva004714\UNIMED VALE DO ACO COOPERATIVA DE TRABALHO MEDICO\BRENO PATROCINIO SANTOS SILVA - MARCO TULIO GOMES CAMPOS - Pesquisa NPS\Gestão a vista - NPS"),
+    Fonte = Folder.Files(" "),
 
     ArquivoCE = Fonte{
         [
-            #"Folder Path"="C:\Users\uva004714\UNIMED VALE DO ACO COOPERATIVA DE TRABALHO MEDICO\BRENO PATROCINIO SANTOS SILVA - MARCO TULIO GOMES CAMPOS - Pesquisa NPS\Gestão a vista - NPS\Relatorios\Centro de Especialidades\Relatório\",
-            Name="RelatórioCE.xlsx"
+            #"Folder Path"= " ",
+            Name=" relatorio.xlsx"
         ]
     }[Content],
 
