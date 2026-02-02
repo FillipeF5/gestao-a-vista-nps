@@ -57,6 +57,12 @@ let
 
     #"Texto em Minúscula" = Table.TransformColumns(NulosComoVazio,{{"Pergunta 4 - Pergunta Livre", Text.Lower, type text}}),
 
+    #"CountRespostas" = Table.AddColumn(
+        #"Texto em Minúscula", 
+        "countRespostas",
+        each if [#"Pergunta 4 - Pergunta Livre"] = "" then "não respondeu" else "respondeu", Int64.Type
+    ),
+
     // 7) (Importante) Blinda os tipos do mapa vindo de outra query/tabela
     MapaTipado = Table.TransformColumnTypes(
         MapaPalavrasChave,
@@ -65,7 +71,7 @@ let
 
     // 8) adiciona a coluna com a função
     CategoriaFeedback = Table.AddColumn(
-        #"Texto em Minúscula",
+        #"CountRespostas",
         "CategoriaFeedback",
         each fxClassificarPorPadroes([#"Pergunta 4 - Pergunta Livre"], MapaTipado),
         type text
