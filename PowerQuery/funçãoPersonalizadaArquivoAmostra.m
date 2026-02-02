@@ -1,28 +1,17 @@
 let
-    // ====== 1) Fonte: pasta e arquivo ======
-    Fonte = Folder.Files(" "),
+    Fonte = Excel.Workbook(Parâmetro1, null, true),
+    #"Sheet 1_Sheet" = Fonte{[Item="Sheet 1",Kind="Sheet"]}[Data],
 
-    ArquivoCE = Fonte{
-        [
-            #"Folder Path"= " ",
-            Name=" relatorio.xlsx"
-        ]
-    }[Content],
-
-    // ====== 2) Abrir o Excel ======
-    WB = Excel.Workbook(ArquivoCE, null, true),
-    Sheet1 = WB{[Item="Sheet 1", Kind="Sheet"]}[Data],
-
-    // ====== 3) Limpeza inicial ======
-    LinhasSuperioresRemovidas = Table.Skip(Sheet1, 6),
+    // Limpeza inicial 
+    LinhasSuperioresRemovidas = Table.Skip(#"Sheet 1_Sheet", 6),
     CabecalhosPromovidos = Table.PromoteHeaders(LinhasSuperioresRemovidas, [PromoteAllScalars=true]),
 
-    // ====== 4) Tipagem ======
+    // Tipagem 
     TipoAlterado = Table.TransformColumnTypes(CabecalhosPromovidos, {
-        {"Data", type datetime},
+        {"Data", type date},
         {"Protocolo", Int64.Type},
         {"Nome", type text},
-        {"Contato", Int64.Type},
+        {"Contato", type text},
         {"Fila", type text},
         {"Agente", type text},
         {"Classificação", type text},
@@ -40,7 +29,7 @@ let
     LinhasInferioresRemovidas = Table.RemoveLastN(TipoAlterado, 1),
     ColunasRemovidas = Table.RemoveColumns(LinhasInferioresRemovidas, {"Fila", "Agente", "Classificação", "Column17", "Column16"}),
 
-    // ====== 5) Renomear perguntas ======
+    // Renomear perguntas
     ColunasRenomeadas = Table.RenameColumns(ColunasRemovidas, {
         {"!9.13.0.0 [PRO CA ME] - NPS Pergunta 1 - Projeto Valor (Atendimento Médico)", "Pergunta 1 - Atendimento Médico"},
         {"!9.13.0.1 [PRO CA ME] - NPS Pergunta 2 - Projeto Valor (Local Do Atendimento)", "Pergunta 2 - Local Do Atendimento"},
@@ -48,8 +37,7 @@ let
         {"!9.13.3 [PRO CA PL] NPS Pergunta 4 - Projeto Valor [ Pergunta Livre ]", "Pergunta 4 - Pergunta Livre"}
     }),
 
-
-    // 6) Garante texto e nulos na pergunta livre
+    // Garante texto e nulos na pergunta livre
     TipoAlterado1 = Table.TransformColumnTypes(ColunasRenomeadas, {{"Pergunta 4 - Pergunta Livre", type text}}),
     NulosComoVazio = Table.ReplaceValue(
         TipoAlterado1, null, "", Replacer.ReplaceValue, {"Pergunta 4 - Pergunta Livre"}
@@ -60,16 +48,16 @@ let
     #"CountRespostas" = Table.AddColumn(
         #"Texto em Minúscula", 
         "countRespostas",
-        each if [#"Pergunta 4 - Pergunta Livre"] = "" then "não respondeu" else "respondeu", Int64.Type
+        each if [#"Pergunta 4 - Pergunta Livre"] = "" then "Sem resposta" else "Respondido", type text
     ),
 
-    // 7) (Importante) Blinda os tipos do mapa vindo de outra query/tabela
+    // (Importante) Blinda os tipos do mapa vindo de outra query/tabela
     MapaTipado = Table.TransformColumnTypes(
         MapaPalavrasChave,
         {{"Padrao", type text}, {"Categoria", type text}, {"Prioridade", Int64.Type}}
     ),
 
-    // 8) adiciona a coluna com a função
+    // Adiciona a coluna com a função
     CategoriaFeedback = Table.AddColumn(
         #"CountRespostas",
         "CategoriaFeedback",
@@ -166,7 +154,8 @@ let
     each if [#"Pergunta 3 - Recomendaria"] <= 6 then "Detrator"
     else if [#"Pergunta 3 - Recomendaria"] > 6 and [#"Pergunta 3 - Recomendaria"] < 9 then "Neutro"
     else if [#"Pergunta 3 - Recomendaria"] >= 9 then "Promotor"
-    else "")
+    else ""),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Classificação da avaliação",{{"Data", type date}})
 
 in
-    #"Classificação da avaliação"
+    #"Tipo Alterado"
