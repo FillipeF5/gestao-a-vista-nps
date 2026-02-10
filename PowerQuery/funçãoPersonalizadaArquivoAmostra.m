@@ -155,7 +155,7 @@ let
     else if [#"Pergunta 3 - Recomendaria"] > 6 and [#"Pergunta 3 - Recomendaria"] < 9 then "Neutro"
     else if [#"Pergunta 3 - Recomendaria"] >= 9 then "Promotor"
     else ""),
-    #"Tipo Alterado" = Table.TransformColumnTypes(#"Classificação da avaliação",{{"Data", type date}})
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Classificação da avaliação",{{"Data", type date}, {"media_da_avaliacao_do_cliente", type number}, {"Pergunta 1 - Atendimento Médico", type number}, {"Pergunta 2 - Local Do Atendimento", type number}, {"Pergunta 3 - Recomendaria", type number}})
 
 in
     #"Tipo Alterado"
