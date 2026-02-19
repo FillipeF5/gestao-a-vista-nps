@@ -1,1 +1,8 @@
+# Ignore log files
+*.log
+
+# Ignore temp folders
+temp/
+
+# Ignore dados sensiveis
 PowerQuery/RelatórioCE.xlsx
